@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Search, Menu, X, Trophy, Calendar, Users, GitBranch, BarChart3 } from 'lucide-react'
 import { useAppStore } from '@/store/useAppStore'
 import { FIXTURES } from '@/data/fixtures'
+import { TimezoneSelector } from '@/components/ui/TimezoneSelector'
 import { cn } from '@/lib/utils'
 
 const TOURNAMENT_START = new Date('2026-06-11T19:00:00Z')
@@ -130,6 +131,11 @@ export function Navigation() {
                 </div>
               )}
 
+              {/* Timezone selector — desktop */}
+              <div className="hidden md:block">
+                <TimezoneSelector variant="pill" />
+              </div>
+
               {/* Mobile menu */}
               <button
                 onClick={toggleMobileNav}
@@ -198,6 +204,11 @@ export function Navigation() {
                   </motion.div>
                 )
               })}
+
+              {/* Timezone selector — mobile */}
+              <div className="mt-2">
+                <TimezoneSelector variant="inline" />
+              </div>
 
               {/* Dynamic tournament status */}
               <div className={cn(

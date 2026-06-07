@@ -15,6 +15,7 @@ interface AppState {
   clearVote: () => void
   setLayout: (layout: UserPreferences['layout']) => void
   setTheme: (theme: UserPreferences['theme']) => void
+  setTimeZone: (tz: string) => void
   setFanPoll: (poll: FanPoll) => void
   setSearchOpen: (open: boolean) => void
   setMobileNavOpen: (open: boolean) => void
@@ -64,6 +65,11 @@ export const useAppStore = create<AppState>()(
           preferences: { ...s.preferences, theme },
         })),
 
+      setTimeZone: (tz) =>
+        set(s => ({
+          preferences: { ...s.preferences, timeZone: tz },
+        })),
+
       setFanPoll: (poll) => set({ fanPoll: poll }),
 
       setSearchOpen:   (open) => set({ searchOpen: open }),
@@ -85,3 +91,4 @@ export const useHasVoted     = () => useAppStore(s => s.preferences.hasVoted)
 export const useVotedTeam    = () => useAppStore(s => s.preferences.votedTeamId)
 export const useSearchOpen   = () => useAppStore(s => s.searchOpen)
 export const useFanPoll      = () => useAppStore(s => s.fanPoll)
+export const useTimezone     = () => useAppStore(s => s.preferences.timeZone)

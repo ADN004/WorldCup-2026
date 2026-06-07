@@ -11,6 +11,7 @@ import { LiveBadge } from './LiveBadge'
 import { CountdownTimer } from './CountdownTimer'
 import { cn, formatScore, importanceLabel, importanceColor, isTBD, formatStageLabel } from '@/lib/utils'
 import { formatMatchTime, formatMatchDate, isMatchUpcoming } from '@/lib/timeUtils'
+import { useTimezone } from '@/store/useAppStore'
 
 interface Props {
   match: Match
@@ -18,6 +19,7 @@ interface Props {
 }
 
 export function MatchDetailModal({ match, onClose }: Props) {
+  const tz        = useTimezone()
   const homeTeam  = isTBD(match.homeTeamId) ? null : getTeam(match.homeTeamId)
   const awayTeam  = isTBD(match.awayTeamId) ? null : getTeam(match.awayTeamId)
   const stadium   = getStadium(match.stadiumId)
@@ -131,10 +133,10 @@ export function MatchDetailModal({ match, onClose }: Props) {
               ) : (
                 <>
                   <span className="text-2xl sm:text-3xl font-stats text-electric-blue leading-none">
-                    {formatMatchTime(match.utcDate)}
+                    {formatMatchTime(match.utcDate, tz)}
                   </span>
                   <span className="text-[0.65rem] text-white/35 text-center">
-                    {formatMatchDate(match.utcDate)}
+                    {formatMatchDate(match.utcDate, tz)}
                   </span>
                 </>
               )}

@@ -9,6 +9,7 @@ import { MatchDetailModal } from '@/components/ui/MatchDetailModal'
 import { TeamFlag } from '@/components/ui/TeamFlag'
 import { cn, isTBD } from '@/lib/utils'
 import { formatMatchTime, formatMatchDateShort } from '@/lib/timeUtils'
+import { useTimezone } from '@/store/useAppStore'
 import type { Match } from '@/types'
 
 // ─── Layout constants ────────────────────────────────────────────────────────
@@ -90,6 +91,7 @@ function BracketCard({ match, flip = false, onClick }: {
   flip?: boolean
   onClick: () => void
 }) {
+  const tz   = useTimezone()
   const home = isTBD(match.homeTeamId) ? null : getTeam(match.homeTeamId)
   const away = isTBD(match.awayTeamId) ? null : getTeam(match.awayTeamId)
   const isLive = match.status === 'LIVE' || match.status === 'HALF_TIME'
@@ -113,8 +115,8 @@ function BracketCard({ match, flip = false, onClick }: {
     >
       {/* Header */}
       <div className="flex items-center justify-between px-2 py-[3px] bg-white/[0.03] border-b border-white/[0.045]">
-        <span className="text-[0.52rem] text-white/22 font-semibold">{formatMatchDateShort(match.utcDate)}</span>
-        <span className="text-[0.52rem] text-electric-blue/55 font-semibold">{formatMatchTime(match.utcDate)}</span>
+        <span className="text-[0.52rem] text-white/22 font-semibold">{formatMatchDateShort(match.utcDate, tz)}</span>
+        <span className="text-[0.52rem] text-electric-blue/55 font-semibold">{formatMatchTime(match.utcDate, tz)}</span>
       </div>
       {/* Home */}
       <div className={cn('flex items-center justify-between gap-1.5 px-2 py-[6px] border-b border-white/[0.04]', homeWon && 'bg-success/5')}>
@@ -283,6 +285,7 @@ function BracketHeaders() {
 
 // ─── Mobile match card (full-width list) ──────────────────────────────────────
 function MobileCard({ match, onClick }: { match: Match; onClick: () => void }) {
+  const tz   = useTimezone()
   const home = isTBD(match.homeTeamId) ? null : getTeam(match.homeTeamId)
   const away = isTBD(match.awayTeamId) ? null : getTeam(match.awayTeamId)
   const isLive = match.status === 'LIVE' || match.status === 'HALF_TIME'
@@ -300,8 +303,8 @@ function MobileCard({ match, onClick }: { match: Match; onClick: () => void }) {
       )}
     >
       <div className="flex items-center justify-between px-3 py-1.5 bg-white/[0.025] border-b border-glass-border/50">
-        <span className="text-[0.6rem] text-white/25 font-semibold">{formatMatchDateShort(match.utcDate)}</span>
-        <span className="text-[0.6rem] text-electric-blue/60 font-semibold">{formatMatchTime(match.utcDate)}</span>
+        <span className="text-[0.6rem] text-white/25 font-semibold">{formatMatchDateShort(match.utcDate, tz)}</span>
+        <span className="text-[0.6rem] text-electric-blue/60 font-semibold">{formatMatchTime(match.utcDate, tz)}</span>
       </div>
       <div className={cn('flex items-center justify-between gap-2 px-3 py-2.5 border-b border-glass-border/30', homeWon && 'bg-success/5')}>
         <div className="flex items-center gap-2 min-w-0">

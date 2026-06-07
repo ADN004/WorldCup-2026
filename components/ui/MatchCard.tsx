@@ -12,6 +12,7 @@ import { CountdownTimer } from './CountdownTimer'
 import { MatchDetailModal } from './MatchDetailModal'
 import { cn, formatScore, importanceLabel, importanceColor, isTBD } from '@/lib/utils'
 import { formatMatchTime, formatMatchDate, isMatchUpcoming } from '@/lib/timeUtils'
+import { useTimezone } from '@/store/useAppStore'
 
 interface MatchCardProps {
   match: Match
@@ -22,6 +23,7 @@ interface MatchCardProps {
 
 export function MatchCard({ match, compact = false, animate = false, delay = 0 }: MatchCardProps) {
   const [showModal, setShowModal] = useState(false)
+  const tz = useTimezone()
 
   const homeTeam  = isTBD(match.homeTeamId) ? null : getTeam(match.homeTeamId)
   const awayTeam  = isTBD(match.awayTeamId) ? null : getTeam(match.awayTeamId)
@@ -89,14 +91,17 @@ export function MatchCard({ match, compact = false, animate = false, delay = 0 }
           </>
         ) : (
           <>
-            <span className={cn(
-              'font-stats text-electric-blue leading-none',
-              compact ? 'text-xl' : 'text-2xl'
-            )}>
-              {formatMatchTime(match.utcDate)}
+            <span
+              suppressHydrationWarning
+              className={cn(
+                'font-stats text-electric-blue leading-none',
+                compact ? 'text-xl' : 'text-2xl'
+              )}
+            >
+              {formatMatchTime(match.utcDate, tz)}
             </span>
-            <span className="text-[0.65rem] text-white/30 font-semibold tracking-wide">
-              {formatMatchDate(match.utcDate)}
+            <span suppressHydrationWarning className="text-[0.65rem] text-white/30 font-semibold tracking-wide">
+              {formatMatchDate(match.utcDate, tz)}
             </span>
           </>
         )}
@@ -138,7 +143,7 @@ export function MatchCard({ match, compact = false, animate = false, delay = 0 }
           <CountdownTimer
             utcDate={match.utcDate}
             size="sm"
-            showDays={false}
+            showDays
             className="py-1"
           />
         </div>

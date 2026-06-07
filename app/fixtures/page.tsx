@@ -8,10 +8,8 @@ import { TEAMS } from '@/data/teams'
 import { MatchCard } from '@/components/ui/MatchCard'
 import { TeamFlag } from '@/components/ui/TeamFlag'
 import { cn } from '@/lib/utils'
-import {
-  formatMatchDate, isMatchToday, getMatchDayLabel, toIST
-} from '@/lib/timeUtils'
-import { format, addDays, startOfDay } from 'date-fns'
+import { getMatchDayLabel, getDateKey } from '@/lib/timeUtils'
+import { useAppStore } from '@/store/useAppStore'
 import type { MatchStage, MatchStatus } from '@/types'
 
 const STAGE_FILTERS: { label: string; value: MatchStage | 'ALL' }[] = [
@@ -37,6 +35,7 @@ export default function FixturesPage() {
   const [groupFilter,  setGroupFilter]  = useState<string>('ALL')
   const [teamFilter,   setTeamFilter]   = useState<string>('ALL')
   const [showFilters,  setShowFilters]  = useState(false)
+  const tz = useAppStore(s => s.preferences.timeZone)
 
   const filtered = useMemo(() => {
     return FIXTURES.filter(m => {
@@ -48,16 +47,16 @@ export default function FixturesPage() {
     })
   }, [stageFilter, statusFilter, groupFilter, teamFilter])
 
-  // Group by IST date
+  // Group by selected timezone date
   const grouped = useMemo(() => {
     const map = new Map<string, typeof filtered>()
     for (const m of filtered) {
-      const key = format(toIST(m.utcDate), 'yyyy-MM-dd')
+      const key = getDateKey(m.utcDate, tz)
       if (!map.has(key)) map.set(key, [])
       map.get(key)!.push(m)
     }
     return Array.from(map.entries()).sort(([a], [b]) => a.localeCompare(b))
-  }, [filtered])
+  }, [filtered, tz])
 
   const liveCount = FIXTURES.filter(m => m.status === 'LIVE' || m.status === 'HALF_TIME').length
 
@@ -214,13 +213,12 @@ export default function FixturesPage() {
         </div>
       ) : (
         <div className="flex flex-col gap-8">
-          {grouped.map(([dateKey, matches], gi) => {
-            const dateObj  = new Date(dateKey)
-            const isToday  = isMatchToday(matches[0].utcDate)
-            const dayLabel = getMatchDayLabel(matches[0].utcDate)
+          {grouped.map(([dk, matches]) => {
+            const dayLabel = getMatchDayLabel(matches[0].utcDate, tz)
+            const isToday  = dayLabel === 'Today'
 
             return (
-              <div key={dateKey}>
+              <div key={dk}>
                 {/* Day header */}
                 <div className="flex items-center gap-3 mb-3 sticky top-16 z-10 py-2">
                   <div className={cn(
