@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { X, MapPin } from 'lucide-react'
+import { X, MapPin, Zap } from 'lucide-react'
 import type { Match } from '@/types'
 import { getTeam } from '@/data/teams'
 import { getStadium } from '@/data/stadiums'
@@ -203,6 +203,30 @@ export function MatchDetailModal({ match, onClose }: Props) {
               </div>
             </div>
           </div>
+        )}
+
+        {/* Coming live teaser — only for upcoming matches */}
+        {isUpcoming && (
+          <>
+            <div className="h-px mx-5" style={{ background: 'rgba(255,255,255,0.06)' }} />
+            <div className="px-5 py-5">
+              <div
+                className="rounded-2xl p-4 flex items-start gap-3"
+                style={{ background: 'rgba(0,194,255,0.05)', border: '1px solid rgba(0,194,255,0.12)' }}
+              >
+                <div className="p-1.5 rounded-lg flex-shrink-0" style={{ background: 'rgba(0,194,255,0.1)' }}>
+                  <Zap className="w-3.5 h-3.5 text-electric-blue" />
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-electric-blue mb-1">Going live soon</p>
+                  <p className="text-xs text-white/40 leading-relaxed">
+                    Once kick-off starts, we'll show live scores, lineups, goal scorers,
+                    cards, and real-time match events right here.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </>
         )}
 
         {/* Bottom safe area */}
