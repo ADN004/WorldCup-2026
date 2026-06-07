@@ -1,5 +1,9 @@
+'use client'
+
 import Link from 'next/link'
 import { Trophy, Globe } from 'lucide-react'
+import { useAppStore } from '@/store/useAppStore'
+import { TIMEZONE_LIST } from '@/components/ui/TimezoneSelector'
 
 function GithubIcon({ className }: { className?: string }) {
   return (
@@ -25,6 +29,10 @@ const LINKS = [
 ]
 
 export function Footer() {
+  const tz = useAppStore(s => s.preferences.timeZone)
+  const tzEntry = TIMEZONE_LIST.find(t => t.value === tz)
+  const tzLabel = tzEntry?.label ?? tz
+
   return (
     <footer className="relative mt-24 border-t border-glass-border">
       {/* Top gradient fade */}
@@ -50,7 +58,7 @@ export function Footer() {
             </Link>
             <p className="text-sm text-white/40 leading-relaxed max-w-xs">
               The ultimate fan hub for FIFA World Cup 2026. Live scores, fixtures,
-              standings, and more — all in IST.
+              standings, and more.
             </p>
             <div className="flex items-center gap-2 text-xs text-white/30">
               <div className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
@@ -81,7 +89,10 @@ export function Footer() {
               <span>June 11 – July 19, 2026</span>
               <span>16 Host Cities · 3 Countries</span>
               <span>48 Teams · 104 Matches · 39 days</span>
-              <span>All times shown in IST (UTC+5:30)</span>
+              <span suppressHydrationWarning>
+                All times shown in{' '}
+                <span className="text-white/60 font-medium">{tzLabel}</span>
+              </span>
             </div>
             <div className="flex items-center gap-3 mt-2">
               <a href="https://t.me/crypto_monkeyyy_channel" target="_blank" rel="noopener noreferrer"
