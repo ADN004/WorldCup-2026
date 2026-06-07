@@ -5,8 +5,10 @@ import { ArrowLeft, Star, Shield, Calendar, TrendingUp } from 'lucide-react'
 import { TEAMS, getTeam } from '@/data/teams'
 import { getGroup }       from '@/data/groups'
 import { getTeamFixtures } from '@/data/fixtures'
+import { getSquad }        from '@/data/squads'
 import { TeamFlag }        from '@/components/ui/TeamFlag'
 import { MatchCard }       from '@/components/ui/MatchCard'
+import { TeamSquad }       from '@/components/ui/TeamSquad'
 
 interface Props {
   params: Promise<{ slug: string }>
@@ -34,6 +36,7 @@ export default async function TeamPage({ params }: Props) {
   const group    = getGroup(team.group)
   const standing = group?.standings.find(s => s.teamId === team.id)
   const matches  = getTeamFixtures(team.id)
+  const squad    = getSquad(team.id)
 
   return (
     <div className="page-container py-8">
@@ -130,6 +133,13 @@ export default async function TeamPage({ params }: Props) {
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* Squad */}
+      {squad.length > 0 && (
+        <div className="mb-8">
+          <TeamSquad players={squad} />
         </div>
       )}
 

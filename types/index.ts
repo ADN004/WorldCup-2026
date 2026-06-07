@@ -169,6 +169,14 @@ export interface SearchResult {
   href: string
 }
 
+export type Position = 'GK' | 'DEF' | 'MID' | 'FWD'
+
+export interface Player {
+  name: string
+  pos: Position
+  club: string
+}
+
 export interface TeamWithDetails extends Team {
   matches: Match[]
   standing?: GroupStanding
