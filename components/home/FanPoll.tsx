@@ -321,7 +321,7 @@ export function FanPoll() {
             onClick={() => setShowAll(v => !v)}
             className="mt-auto text-xs text-white/30 hover:text-white/60 transition-colors text-center pt-1"
           >
-            {showAll ? 'Show top 10' : `Show all ${TEAMS.length} teams`}
+            {showAll ? 'Show top 10' : 'Show top 20'}
           </button>
         </div>
 
