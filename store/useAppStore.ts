@@ -12,6 +12,7 @@ interface AppState {
 
   setFavoriteTeam: (teamId: string | null) => void
   setHasVoted: (teamId: string) => void
+  clearVote: () => void
   setLayout: (layout: UserPreferences['layout']) => void
   setTheme: (theme: UserPreferences['theme']) => void
   setFanPoll: (poll: FanPoll) => void
@@ -46,6 +47,11 @@ export const useAppStore = create<AppState>()(
       setHasVoted: (teamId) =>
         set(s => ({
           preferences: { ...s.preferences, hasVoted: true, votedTeamId: teamId },
+        })),
+
+      clearVote: () =>
+        set(s => ({
+          preferences: { ...s.preferences, hasVoted: false, votedTeamId: null },
         })),
 
       setLayout: (layout) =>

@@ -59,7 +59,7 @@ export function SearchModal() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -20, scale: 0.96 }}
             transition={{ type: 'spring', bounce: 0.2, duration: 0.35 }}
-            className="fixed top-[10vh] left-1/2 -translate-x-1/2 z-[61] w-full max-w-xl px-4"
+            className="fixed top-[10vh] left-1/2 -translate-x-1/2 z-[61] w-[calc(100vw-24px)] max-w-xl"
           >
             <div className="glass-lg rounded-2xl overflow-hidden shadow-glass-lg">
               {/* Search input */}

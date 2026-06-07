@@ -119,3 +119,8 @@ export function setLocalVote(teamId: string): void {
   if (typeof window === 'undefined') return
   localStorage.setItem(VOTE_KEY, JSON.stringify({ teamId, ts: Date.now() }))
 }
+
+export function clearLocalVote(): void {
+  if (typeof window === 'undefined') return
+  localStorage.removeItem(VOTE_KEY)
+}

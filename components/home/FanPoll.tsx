@@ -7,7 +7,7 @@ import { TEAMS } from '@/data/teams'
 import { TeamFlag } from '@/components/ui/TeamFlag'
 import { Section } from '@/components/ui/GlassCard'
 import { useAppStore } from '@/store/useAppStore'
-import { castVote, setLocalVote, getLocalVote, subscribeToPoll } from '@/lib/firebase'
+import { castVote, setLocalVote, getLocalVote, clearLocalVote, subscribeToPoll } from '@/lib/firebase'
 import { cn, formatNumber } from '@/lib/utils'
 import type { FanPoll as FanPollType } from '@/types'
 
@@ -25,7 +25,7 @@ const SEED_POLL: FanPollType = {
 }
 
 export function FanPoll() {
-  const { preferences, setHasVoted, setFanPoll } = useAppStore()
+  const { preferences, setHasVoted, clearVote, setFanPoll } = useAppStore()
   const [poll, setPoll] = useState<FanPollType>(SEED_POLL)
   const [voting, setVoting] = useState(false)
   const [selectedTeam, setSelectedTeam] = useState<string | null>(null)
@@ -40,8 +40,19 @@ export function FanPoll() {
     if (lv && teamId && !hasVoted) setHasVoted(teamId)
 
     const unsubscribe = subscribeToPoll(data => {
-      setPoll(data)
-      setFanPoll(data)
+      // Merge live Firebase votes on top of seed so all 48 teams always appear
+      const liveMap = new Map((data.entries ?? []).map(e => [e.teamId, e.votes]))
+      const mergedEntries = SEED_POLL.entries.map(seed => ({
+        teamId: seed.teamId,
+        votes:  seed.votes + (liveMap.get(seed.teamId) ?? 0),
+      }))
+      const merged: FanPollType = {
+        totalVotes:  SEED_POLL.totalVotes + (data.totalVotes ?? 0),
+        lastUpdated: data.lastUpdated,
+        entries:     mergedEntries,
+      }
+      setPoll(merged)
+      setFanPoll(merged)
     })
     return unsubscribe
   }, [])
@@ -124,6 +135,12 @@ export function FanPoll() {
                 </span>
               </p>
               <p className="text-xs text-white/30 mt-1">Results are shown on the right →</p>
+              <button
+                onClick={() => { clearLocalVote(); clearVote() }}
+                className="mt-4 text-xs text-white/30 hover:text-white/60 underline underline-offset-2 transition-colors"
+              >
+                Change my vote
+              </button>
             </div>
           ) : (
             <>

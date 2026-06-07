@@ -228,15 +228,6 @@ function CenterCol({ finalMatch, onClick }: { finalMatch?: Match; onClick: (m: M
       <svg className="absolute inset-0 pointer-events-none" width={CEN} height={H} style={{ overflow: 'visible' }}>
         <line x1={0}    y1={finalY} x2={leftX - 1}  y2={finalY} stroke={stroke} strokeWidth={1.5} strokeLinecap="round" />
         <line x1={CEN}  y1={finalY} x2={rightX + 1} y2={finalY} stroke={stroke} strokeWidth={1.5} strokeLinecap="round" />
-        {/* Gold halo around Final */}
-        {finalMatch && (
-          <rect
-            x={leftX - 4} y={finalY - CH / 2 - 4}
-            width={CW + 8} height={CH + 8}
-            rx={15} fill="none"
-            stroke="rgba(245,197,24,0.28)" strokeWidth={1}
-          />
-        )}
       </svg>
 
       {/* Trophy */}
