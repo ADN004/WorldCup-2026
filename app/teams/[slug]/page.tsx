@@ -6,9 +6,11 @@ import { TEAMS, getTeam } from '@/data/teams'
 import { getGroup }       from '@/data/groups'
 import { getTeamFixtures } from '@/data/fixtures'
 import { getSquad }        from '@/data/squads'
+import { getLineup }       from '@/data/lineups'
 import { TeamFlag }        from '@/components/ui/TeamFlag'
 import { MatchCard }       from '@/components/ui/MatchCard'
 import { TeamSquad }       from '@/components/ui/TeamSquad'
+import { TeamLineup }      from '@/components/ui/TeamLineup'
 
 interface Props {
   params: Promise<{ slug: string }>
@@ -37,6 +39,7 @@ export default async function TeamPage({ params }: Props) {
   const standing = group?.standings.find(s => s.teamId === team.id)
   const matches  = getTeamFixtures(team.id)
   const squad    = getSquad(team.id)
+  const lineup   = getLineup(team.id)
 
   return (
     <div className="page-container py-8">
@@ -136,15 +139,8 @@ export default async function TeamPage({ params }: Props) {
         </div>
       )}
 
-      {/* Squad */}
-      {squad.length > 0 && (
-        <div className="mb-8">
-          <TeamSquad players={squad} />
-        </div>
-      )}
-
       {/* Fixtures */}
-      <div>
+      <div className="mb-8">
         <h2 className="font-heading text-xl font-bold text-white mb-4">
           Fixtures & Results
         </h2>
@@ -160,6 +156,20 @@ export default async function TeamPage({ params }: Props) {
           </div>
         )}
       </div>
+
+      {/* Squad */}
+      {squad.length > 0 && (
+        <div className="mb-8">
+          <TeamSquad players={squad} />
+        </div>
+      )}
+
+      {/* Starting XI / Lineup */}
+      {lineup && (
+        <div className="mb-8">
+          <TeamLineup lineup={lineup} teamColor={team.primaryColor} />
+        </div>
+      )}
     </div>
   )
 }

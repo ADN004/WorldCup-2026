@@ -169,6 +169,26 @@ export interface SearchResult {
   href: string
 }
 
+export interface LineupPlayer {
+  name:   string
+  number: number
+  pos:    'GK' | 'DEF' | 'MID' | 'FWD'
+  x:      number   // 0–100 % from left edge of pitch
+  y:      number   // 0–100 % from top (0 = attacking end, 100 = GK end)
+}
+
+export interface SubstitutePlayer {
+  name:   string
+  number: number
+  pos:    'GK' | 'DEF' | 'MID' | 'FWD'
+}
+
+export interface TeamLineupData {
+  formation: string           // e.g. '4-3-3'
+  players:   LineupPlayer[]   // 11 starters
+  subs:      SubstitutePlayer[]
+}
+
 export type Position = 'GK' | 'DEF' | 'MID' | 'FWD'
 
 export interface Player {
