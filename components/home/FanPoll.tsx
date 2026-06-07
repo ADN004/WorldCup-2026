@@ -14,23 +14,20 @@ import type { FanPoll as FanPollType } from '@/types'
 // Teams sorted by fan base desc — most popular appear first in the voting grid
 const TEAMS_BY_FANBASE = [...TEAMS].sort((a, b) => b.fanBase - a.fanBase)
 
-// Deterministic seed data — no Math.random() to avoid hydration mismatch
-const SEED_POLL: FanPollType = {
-  totalVotes: 142857,
-  lastUpdated: '2026-06-01T00:00:00Z',
-  entries: TEAMS.map(t => ({
-    teamId: t.id,
-    votes: Math.floor(t.fanBase * 10000),
-  })).sort((a, b) => b.votes - a.votes),
+const EMPTY_POLL: FanPollType = {
+  totalVotes:  0,
+  lastUpdated: new Date().toISOString(),
+  entries:     [],
 }
 
 export function FanPoll() {
   const { preferences, setHasVoted, clearVote, setFanPoll } = useAppStore()
-  const [poll, setPoll] = useState<FanPollType>(SEED_POLL)
-  const [voting, setVoting] = useState(false)
+  const [poll, setPoll]               = useState<FanPollType>(EMPTY_POLL)
+  const [loaded, setLoaded]           = useState(false)
+  const [voting, setVoting]           = useState(false)
   const [selectedTeam, setSelectedTeam] = useState<string | null>(null)
-  const [showAll, setShowAll] = useState(false)
-  const [search, setSearch] = useState('')
+  const [showAll, setShowAll]         = useState(false)
+  const [search, setSearch]           = useState('')
 
   const hasVoted    = preferences.hasVoted
   const votedTeamId = preferences.votedTeamId
@@ -40,19 +37,15 @@ export function FanPoll() {
     if (lv && teamId && !hasVoted) setHasVoted(teamId)
 
     const unsubscribe = subscribeToPoll(data => {
-      // Merge live Firebase votes on top of seed so all 48 teams always appear
-      const liveMap = new Map((data.entries ?? []).map(e => [e.teamId, e.votes]))
-      const mergedEntries = SEED_POLL.entries.map(seed => ({
-        teamId: seed.teamId,
-        votes:  seed.votes + (liveMap.get(seed.teamId) ?? 0),
-      }))
-      const merged: FanPollType = {
-        totalVotes:  SEED_POLL.totalVotes + (data.totalVotes ?? 0),
+      const entries = (data.entries ?? []).sort((a, b) => b.votes - a.votes)
+      const live: FanPollType = {
+        totalVotes:  entries.reduce((sum, e) => sum + e.votes, 0),
         lastUpdated: data.lastUpdated,
-        entries:     mergedEntries,
+        entries,
       }
-      setPoll(merged)
-      setFanPoll(merged)
+      setPoll(live)
+      setFanPoll(live)
+      setLoaded(true)
     })
     return unsubscribe
   }, [])
@@ -67,12 +60,15 @@ export function FanPoll() {
     )
   }, [search])
 
-  const topEntries = useMemo(
-    () => [...(poll.entries ?? [])].sort((a, b) => b.votes - a.votes).slice(0, showAll ? 20 : 10),
-    [poll.entries, showAll]
-  )
+  const topEntries = useMemo(() => {
+    const voteMap = new Map((poll.entries ?? []).map(e => [e.teamId, e.votes]))
+    return TEAMS
+      .map(t => ({ teamId: t.id, votes: voteMap.get(t.id) ?? 0 }))
+      .sort((a, b) => b.votes - a.votes)
+      .slice(0, showAll ? 20 : 10)
+  }, [poll.entries, showAll])
 
-  const totalVotes = poll.totalVotes || topEntries.reduce((s, e) => s + e.votes, 0)
+  const totalVotes = poll.totalVotes
 
   const handleVote = async () => {
     if (!selectedTeam || voting || hasVoted) return
@@ -85,13 +81,13 @@ export function FanPoll() {
       } else {
         setLocalVote(selectedTeam)
         setHasVoted(selectedTeam)
-        setPoll(prev => ({
-          ...prev,
-          totalVotes: prev.totalVotes + 1,
-          entries: prev.entries.map(e =>
-            e.teamId === selectedTeam ? { ...e, votes: e.votes + 1 } : e
-          ),
-        }))
+        setPoll(prev => {
+          const exists = prev.entries.some(e => e.teamId === selectedTeam)
+          const entries = exists
+            ? prev.entries.map(e => e.teamId === selectedTeam ? { ...e, votes: e.votes + 1 } : e)
+            : [...prev.entries, { teamId: selectedTeam, votes: 1 }]
+          return { ...prev, totalVotes: prev.totalVotes + 1, entries }
+        })
       }
     } finally {
       setVoting(false)
@@ -109,7 +105,7 @@ export function FanPoll() {
             <div className="flex items-center gap-2">
               <Users className="w-4 h-4 text-electric-blue flex-shrink-0" />
               <span className="text-sm font-semibold text-white/70">
-                {formatNumber(totalVotes)} votes cast
+                {totalVotes > 0 ? `${formatNumber(totalVotes)} votes cast` : 'Be the first to vote!'}
               </span>
             </div>
             {hasVoted && (
@@ -164,7 +160,7 @@ export function FanPoll() {
                 )}
               </div>
 
-              {/* Team grid — all 48, sorted by fan base, filtered by search */}
+              {/* Team grid */}
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-64 overflow-y-auto pr-1 no-scrollbar">
                 <AnimatePresence mode="popLayout">
                   {filteredTeams.length === 0 ? (
@@ -258,71 +254,78 @@ export function FanPoll() {
             <span className="text-sm font-semibold text-white/70">Fan Favorites</span>
           </div>
 
-          <div className="flex flex-col gap-2.5">
-            {topEntries.map((entry, i) => {
-              const team    = TEAMS.find(t => t.id === entry.teamId)
-              const pct     = totalVotes > 0 ? (entry.votes / totalVotes) * 100 : 0
-              const isVoted = entry.teamId === votedTeamId
-              if (!team) return null
+          {!loaded ? (
+            <div className="flex-1 flex flex-col items-center justify-center py-12 gap-3">
+              <p className="text-sm text-white/30">Loading results…</p>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-2.5">
+              {topEntries.map((entry, i) => {
+                const team    = TEAMS.find(t => t.id === entry.teamId)
+                const pct     = totalVotes > 0 ? (entry.votes / totalVotes) * 100 : 0
+                const isVoted = entry.teamId === votedTeamId
+                if (!team) return null
 
-              return (
-                <motion.div
-                  key={entry.teamId}
-                  initial={{ opacity: 0, x: 10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: i * 0.03 }}
-                  className="flex items-center gap-2.5"
-                >
-                  {/* Rank */}
-                  <span className={cn(
-                    'w-5 text-xs font-bold tabular-nums text-center flex-shrink-0',
-                    i === 0 ? 'text-gold' : i === 1 ? 'text-white/50' : i === 2 ? 'text-warning/70' : 'text-white/20'
-                  )}>
-                    {i + 1}
-                  </span>
+                return (
+                  <motion.div
+                    key={entry.teamId}
+                    initial={{ opacity: 0, x: 10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: i * 0.03 }}
+                    className="flex items-center gap-2.5"
+                  >
+                    <span className={cn(
+                      'w-5 text-xs font-bold tabular-nums text-center flex-shrink-0',
+                      i === 0 ? 'text-gold' : i === 1 ? 'text-white/50' : i === 2 ? 'text-warning/70' : 'text-white/20'
+                    )}>
+                      {i + 1}
+                    </span>
 
-                  <TeamFlag code={team.code} name={team.name} size="xs" />
+                    <TeamFlag code={team.code} name={team.name} size="xs" />
 
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className={cn(
-                        'text-xs font-semibold truncate',
-                        isVoted ? 'text-gold' : 'text-white/80'
-                      )}>
-                        {team.shortName}
-                        {isVoted && <span className="ml-1">✓</span>}
-                      </span>
-                      <span className="text-xs font-stats text-white/40 tabular-nums flex-shrink-0 ml-2">
-                        {pct.toFixed(1)}%
-                      </span>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className={cn(
+                          'text-xs font-semibold truncate',
+                          isVoted ? 'text-gold' : 'text-white/80'
+                        )}>
+                          {team.shortName}
+                          {isVoted && <span className="ml-1">✓</span>}
+                        </span>
+                        <span className="text-xs font-stats text-white/40 tabular-nums flex-shrink-0 ml-2">
+                          {pct.toFixed(1)}%
+                        </span>
+                      </div>
+                      <div className="progress-bar">
+                        <motion.div
+                          className="progress-fill"
+                          initial={{ width: 0 }}
+                          animate={{ width: `${Math.min(pct, 100)}%` }}
+                          transition={{ duration: 0.8, delay: i * 0.03, ease: 'easeOut' }}
+                          style={{
+                            background: i === 0
+                              ? 'linear-gradient(90deg,#F5C518,#D4A017)'
+                              : isVoted
+                              ? 'linear-gradient(90deg,#00C2FF,#0070FF)'
+                              : 'linear-gradient(90deg,rgba(255,255,255,0.25),rgba(255,255,255,0.1))',
+                          }}
+                        />
+                      </div>
                     </div>
-                    <div className="progress-bar">
-                      <motion.div
-                        className="progress-fill"
-                        initial={{ width: 0 }}
-                        animate={{ width: `${pct}%` }}
-                        transition={{ duration: 0.8, delay: i * 0.03, ease: 'easeOut' }}
-                        style={{
-                          background: i === 0
-                            ? 'linear-gradient(90deg,#F5C518,#D4A017)'
-                            : isVoted
-                            ? 'linear-gradient(90deg,#00C2FF,#0070FF)'
-                            : 'linear-gradient(90deg,rgba(255,255,255,0.25),rgba(255,255,255,0.1))',
-                        }}
-                      />
-                    </div>
-                  </div>
-                </motion.div>
-              )
-            })}
-          </div>
+                  </motion.div>
+                )
+              })}
+            </div>
+          )}
 
-          <button
-            onClick={() => setShowAll(v => !v)}
-            className="mt-auto text-xs text-white/30 hover:text-white/60 transition-colors text-center pt-1"
-          >
-            {showAll ? 'Show top 10' : 'Show top 20'}
-          </button>
+          {loaded && (
+            <button
+              onClick={() => setShowAll(v => !v)}
+              className="mt-auto text-xs text-white/30 hover:text-white/60 transition-colors text-center pt-1"
+            >
+              {showAll ? 'Show top 10' : 'Show top 20'}
+            </button>
+          )}
         </div>
 
       </div>

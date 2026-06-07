@@ -31,6 +31,10 @@ export const metadata: Metadata = {
     description: 'Premium fan hub – live scores, fixtures, standings, bracket.',
     images:      ['/og-image.png'],
   },
+  icons: {
+    icon:  [{ url: '/images/logo.webp', type: 'image/webp' }],
+    apple: '/images/logo.webp',
+  },
   robots: {
     index:  true,
     follow: true,

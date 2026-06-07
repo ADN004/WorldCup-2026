@@ -1,7 +1,8 @@
 'use client'
 
 import Link from 'next/link'
-import { Trophy, Globe } from 'lucide-react'
+import Image from 'next/image'
+import { Globe } from 'lucide-react'
 import { useAppStore } from '@/store/useAppStore'
 import { TIMEZONE_LIST } from '@/components/ui/TimezoneSelector'
 
@@ -45,9 +46,14 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-8">
           {/* Brand */}
           <div className="flex flex-col gap-4">
-            <Link href="/" className="flex items-center gap-2.5">
-              <div className="p-2 rounded-xl bg-gold/10 border border-gold/20">
-                <Trophy className="w-5 h-5 text-gold" />
+            <Link href="/" className="flex items-center gap-3 group">
+              <div className="relative w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 ring-1 ring-gold/30 group-hover:ring-gold/60 transition-all duration-200 shadow-[0_0_16px_rgba(245,197,24,0.2)]">
+                <Image
+                  src="/images/logo.webp"
+                  alt="FIFA World Cup 2026"
+                  fill
+                  className="object-cover group-hover:scale-105 transition-transform duration-200"
+                />
               </div>
               <div>
                 <div className="text-xs text-white/40 font-semibold tracking-widest uppercase">FIFA</div>

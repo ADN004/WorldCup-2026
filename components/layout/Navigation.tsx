@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Search, Menu, X, Trophy, Calendar, Users, GitBranch, BarChart3 } from 'lucide-react'
@@ -64,18 +65,15 @@ export function Navigation() {
         <div className="page-container">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
-            <Link href="/" className="flex items-center gap-2.5 group">
-              <div className="relative w-8 h-8 flex items-center justify-center">
-                <div className="absolute inset-0 rounded-full bg-gradient-gold opacity-20 group-hover:opacity-40 transition-opacity" />
-                <Trophy className="w-5 h-5 text-gold relative z-10" />
-              </div>
-              <div className="flex flex-col leading-none">
-                <span className="font-heading text-xs font-semibold text-gold/70 tracking-widest uppercase">
-                  FIFA
-                </span>
-                <span className="font-heading text-base font-bold text-white tracking-tight">
-                  World Cup <span className="text-gradient-gold">2026</span>
-                </span>
+            <Link href="/" className="flex items-center group">
+              <div className="relative w-10 h-10 rounded-xl overflow-hidden flex-shrink-0 ring-1 ring-gold/30 group-hover:ring-gold/60 transition-all duration-200 shadow-[0_0_12px_rgba(245,197,24,0.2)]">
+                <Image
+                  src="/images/logo.webp"
+                  alt="FIFA World Cup 2026"
+                  fill
+                  className="object-cover group-hover:scale-105 transition-transform duration-200"
+                  priority
+                />
               </div>
             </Link>
 
