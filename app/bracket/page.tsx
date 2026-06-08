@@ -17,7 +17,7 @@ const CW = 148   // card width
 const CH = 76    // card height (approx: 20px header + 28px × 2 team rows)
 const H  = 704   // total bracket height — 8 slots × 88px
 const CX = 20    // connector SVG width
-const CEN = 178  // center column width
+const CEN = 248  // center column width
 
 // ─── Position math ───────────────────────────────────────────────────────────
 const yc = (n: number) => Array.from({ length: n }, (_, i) => (i + 0.5) * (H / n))
@@ -29,57 +29,53 @@ const SFY  = yc(1)   // [352]
 // ─── World Cup Trophy ────────────────────────────────────────────────────────
 function WCTrophy() {
   return (
-    <div className="relative flex flex-col items-center gap-1.5">
-      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 bg-gold/20 blur-3xl rounded-full pointer-events-none" />
-      <svg
-        viewBox="0 0 80 128"
-        className="relative w-[68px] h-[104px] drop-shadow-[0_0_22px_rgba(245,197,24,0.55)]"
-        fill="none"
+    <div className="relative flex justify-center">
+      {/* Ambient glow */}
+      <div
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full pointer-events-none"
+        style={{ width: 160, height: 160, background: 'rgba(245,197,24,0.13)', filter: 'blur(40px)' }}
+      />
+
+      {/* Trophy card */}
+      <div
+        className="relative flex flex-col items-center rounded-2xl overflow-hidden border border-gold/25"
+        style={{
+          width: 190,
+          background: 'linear-gradient(170deg, rgba(245,197,24,0.09) 0%, rgba(6,14,30,0.97) 55%)',
+          boxShadow: '0 0 0 1px rgba(245,197,24,0.06), 0 12px 48px rgba(245,197,24,0.16), inset 0 1px 0 rgba(245,197,24,0.12)',
+        }}
       >
-        <defs>
-          <linearGradient id="gA" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%"   stopColor="#9A6F0A" />
-            <stop offset="35%"  stopColor="#F5C518" />
-            <stop offset="62%"  stopColor="#FFE870" />
-            <stop offset="100%" stopColor="#9A6F0A" />
-          </linearGradient>
-          <linearGradient id="gB" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%"   stopColor="#7A5608" />
-            <stop offset="50%"  stopColor="#D4A015" />
-            <stop offset="100%" stopColor="#7A5608" />
-          </linearGradient>
-        </defs>
-        {/* ── Base ── */}
-        <rect x="6"  y="118" width="68" height="9"  rx="1.5" fill="url(#gB)" />
-        <rect x="13" y="109" width="54" height="10" rx="1.5" fill="url(#gA)" />
-        <rect x="20" y="102" width="40" height="8"  rx="1.5" fill="url(#gB)" />
-        {/* ── Stem ── */}
-        <rect x="30" y="76" width="20" height="27" rx="3" fill="url(#gB)" />
-        <rect x="34" y="78" width="5"  height="23" rx="2" fill="rgba(255,255,255,0.09)" />
-        {/* ── Flare ── */}
-        <ellipse cx="40" cy="76" rx="24" ry="6" fill="url(#gA)" />
-        {/* ── Cup ── */}
-        <path d="M18,42 C15,56 15,70 16,76 L64,76 C65,70 65,56 62,42 Z" fill="url(#gA)" />
-        <path d="M22,44 C19,57 19,70 20,76 L60,76 C61,70 61,57 58,44 Z" fill="rgba(0,0,0,0.06)" />
-        {/* ── Rim ── */}
-        <ellipse cx="40" cy="42" rx="22" ry="6.5" fill="url(#gA)" />
-        <ellipse cx="40" cy="42" rx="15" ry="4"   fill="rgba(0,0,0,0.18)" />
-        {/* ── Left figure ── */}
-        <circle cx="28" cy="32" r="5" fill="url(#gA)" />
-        <path d="M23,35 Q23,28 33,28 L33,42 L23,42 Z" fill="url(#gA)" />
-        {/* ── Right figure ── */}
-        <circle cx="52" cy="32" r="5" fill="url(#gA)" />
-        <path d="M47,35 Q47,28 57,28 L57,42 L47,42 Z" fill="url(#gA)" />
-        {/* ── Globe ── */}
-        <circle cx="40" cy="22" r="10" fill="url(#gB)" />
-        <ellipse cx="40" cy="22" rx="10" ry="4"    stroke="rgba(0,0,0,0.14)" strokeWidth="0.7" fill="none" />
-        <line x1="40" y1="12" x2="40" y2="32"      stroke="rgba(0,0,0,0.14)" strokeWidth="0.7" />
-        {/* ── Cup highlight ── */}
-        <path d="M22,53 Q28,46 34,53" stroke="rgba(255,255,255,0.28)" strokeWidth="1.5" fill="none" strokeLinecap="round" />
-      </svg>
-      <div className="text-center leading-none">
-        <p className="text-gold font-heading font-bold text-[0.68rem] tracking-widest uppercase">World Cup</p>
-        <p className="text-white/18 text-[0.5rem] font-semibold tracking-wide mt-0.5">FIFA 2026</p>
+        {/* Image — mix-blend-mode:screen dissolves the dark photo background */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/images/wc-trophy.jpg"
+          alt="FIFA World Cup Trophy"
+          style={{
+            display: 'block',
+            width: '100%',
+            height: 120,
+            objectFit: 'cover',
+            objectPosition: 'center 30%',
+            mixBlendMode: 'screen',
+            filter: 'brightness(1.1) contrast(1.06) saturate(1.1)',
+          }}
+        />
+
+        {/* Divider */}
+        <div className="w-full h-px" style={{ background: 'rgba(245,197,24,0.18)' }} />
+
+        {/* Text block */}
+        <div className="w-full px-5 py-3 text-center">
+          <p
+            className="font-heading font-bold tracking-[0.25em] uppercase"
+            style={{ color: '#F5C518', fontSize: '0.82rem', letterSpacing: '0.22em' }}
+          >
+            World Cup
+          </p>
+          <p className="text-white/28 font-semibold tracking-widest mt-0.5" style={{ fontSize: '0.54rem' }}>
+            FIFA 2026
+          </p>
+        </div>
       </div>
     </div>
   )
@@ -233,14 +229,14 @@ function CenterCol({ finalMatch, onClick }: { finalMatch?: Match; onClick: (m: M
       </svg>
 
       {/* Trophy */}
-      <div className="absolute left-0 right-0 flex justify-center" style={{ top: H * 0.06 }}>
+      <div className="absolute left-0 right-0 flex justify-center" style={{ top: H * 0.04 }}>
         <WCTrophy />
       </div>
 
       {/* "THE FINAL" label above the card */}
-      <div className="absolute left-0 right-0 text-center" style={{ top: finalY - CH / 2 - 26 }}>
-        <p className="text-[0.56rem] font-bold text-gold/60 tracking-[0.22em] uppercase">The Final</p>
-        <p className="text-[0.48rem] text-white/18 font-semibold tracking-wide">19 Jul · MetLife Stadium</p>
+      <div className="absolute left-0 right-0 text-center" style={{ top: finalY - CH / 2 - 44 }}>
+        <p className="text-[0.62rem] font-bold text-gold/65 tracking-[0.25em] uppercase">The Final</p>
+        <p className="text-[0.52rem] text-white/22 font-semibold tracking-wide mt-0.5">19 Jul · MetLife Stadium</p>
       </div>
 
       {/* Final match card */}
