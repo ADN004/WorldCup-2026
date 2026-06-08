@@ -1,197 +1,353 @@
+<div align="center">
+
 # FIFA World Cup 2026 — Fan Hub
 
-A production-grade World Cup fan hub built with Next.js, TypeScript, Tailwind CSS, Framer Motion, and Firebase.
+**A production-grade football fan hub. 48 teams · 104 matches · 16 cities · live scores.**
 
-**Tournament:** June 11 – July 19, 2026 · 48 Teams · 104 Matches · 39 days · 16 Host Cities across USA, Canada & Mexico
+[![Live](https://img.shields.io/badge/Live-world--cup--2026--lime.vercel.app-brightgreen?style=flat-square)](https://world-cup-2026-lime.vercel.app)
+[![Next.js](https://img.shields.io/badge/Next.js-15-black?style=flat-square&logo=next.js)](https://nextjs.org)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?style=flat-square&logo=typescript)](https://typescriptlang.org)
+[![Tailwind](https://img.shields.io/badge/Tailwind-3.4-38bdf8?style=flat-square&logo=tailwindcss)](https://tailwindcss.com)
+[![Vercel](https://img.shields.io/badge/Deployed-Vercel-black?style=flat-square&logo=vercel)](https://vercel.com)
+
+**June 11 – July 19, 2026 · USA · Canada · Mexico**
+
+</div>
 
 ---
 
-## Quick Start
+## What This Is
+
+A fully static-data-first fan hub that becomes fully live during the World Cup. Every page works before the tournament starts. Once matches begin, live scores, goal scorers, cards, substitutions, and match statistics stream in automatically.
+
+Built entirely on free-tier APIs — zero paid services required at any scale.
+
+---
+
+## Pages
+
+| Route | Description |
+|---|---|
+| `/` | Home — hero, countdown to tournament, today's matches, fan poll, group highlights |
+| `/fixtures` | All 104 fixtures — filter by date, group, stage, or status |
+| `/groups` | All 12 group standings tables with live points and form |
+| `/bracket` | Full knockout bracket — SVG connector lines, FIFA World Cup trophy |
+| `/teams` | All 48 teams grid with flags and FIFA rankings |
+| `/teams/[slug]` | Individual team profile — squad, fixtures, group standing, stats |
+| `/matches/[id]` | **Live match page** — separate desktop and mobile designs |
+
+---
+
+## Live Match Page
+
+The centrepiece feature. Each match at `/matches/[id]` has two genuinely different layouts designed from scratch for each screen size.
+
+### Desktop (≥ 1024px)
+
+Three persistent columns, always visible simultaneously:
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│                    Score Hero (full width)                        │
+│         Teams · Score · LIVE badge · Stadium · Pulse bar         │
+└──────────────────────────────────────────────────────────────────┘
+┌────────────────┐  ┌────────────────┐  ┌────────────────────────┐
+│ Match Events   │  │ Live Statistics│  │ Starting XI            │
+│                │  │                │  │                        │
+│ 23' ⚽ Scorer  │  │ 61% Possession │  │ Home team | Away team  │
+│ 34' 🟨 Player  │  │ Shots · Corners│  │ GK / DEF / MID / FWD  │
+│ 67' ⚽ Scorer  │  │ Fouls · Saves  │  │ (side-by-side grid)   │
+└────────────────┘  └────────────────┘  └────────────────────────┘
+```
+
+### Mobile (< 1024px)
+
+Sticky tab bar + one section at a time. Lineups tab has an internal Home/Away team selector showing one team full-width with readable font sizes instead of a cramped side-by-side grid.
+
+### Match States
+
+- **Scheduled** — kick-off time, countdown, lineups visible, events/stats show empty states centered in cards
+- **Live** — red glowing border, pulsing live bar, real-time score, events timeline, possession bars
+- **Finished** — full score, full event log, final statistics cached for 24 hours
+
+---
+
+## Data Architecture
+
+Two APIs working in parallel, each handling what it does best:
+
+### football-data.org (Free — 10 req/min)
+Handles everything essential:
+- Live score, match status, minute
+- Goal scorers + assists
+- Yellow/red cards
+- Substitutions
+- Venue info
+
+### API-Football / api-sports.io (Free — 100 req/day)
+Handles the richer stats:
+- Ball possession %
+- Total shots + shots on target
+- Corner kicks, fouls, offsides, GK saves
+
+### Why 100 req/day is enough for the entire tournament
+
+Free tier stats refresh every **6 minutes** via Vercel's shared Data Cache. The math:
+
+```
+Worst-case match: 135 min (90 + full ET + penalties)
+135 min ÷ 6 min = 23 intervals × 2 calls = 46 API calls per match
+Two matches on same day: 92 + ~4 post-match = 96 / 100 ✅
+Quota resets at midnight UTC — fresh slate every day
+```
+
+Score and events (football-data.org) refresh every 30 seconds with no budget concern — different API, different quota.
+
+### Serverless-safe caching
+
+All API calls use `next: { revalidate }` — Vercel's **shared Data Cache** at the edge. This is not in-memory: it is shared across every serverless function instance. 10,000 concurrent visitors trigger the same number of real API calls as 1 visitor within any cache window.
+
+### Post-match stats guarantee
+
+A `/api/warmup` endpoint is called by an external cron (cron-job.org, free) every 5 minutes. It detects any match that kicked off in the last 140 minutes and warms all sub-caches. When football-data.org reports `FINISHED`, the route stores stats with a **24-hour cache** — visible to anyone checking results the next day, with zero additional API calls.
+
+```
+Cron fires every 5 min → hits /api/warmup
+Warmup finds active match → calls /api/match/{id}
+football-data.org says FINISHED → stats cached with revalidate: 86400
+Next-day visitor → Vercel serves from 24-hr cache → 0 real API calls
+```
+
+---
+
+## Setup
+
+### 1. Install and run locally
 
 ```bash
-# 1. Install dependencies
+git clone https://github.com/your-username/worldcup-2026
+cd worldcup-2026
 npm install
-
-# 2. Copy and fill in environment variables
 cp .env.example .env.local
-
-# 3. Run the development server
+# fill in .env.local (see below)
 npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000).
 
----
-
-## Fonts
-
-Custom fonts are already installed in `public/fonts/` — no action needed. They load automatically via `app/layout.tsx`.
-
-| Font | Files |
-| --- | --- |
-| Clash Display | `ClashDisplay-Variable.woff2`, `ClashDisplay-Bold.woff2` |
-| Bebas Neue | `BebasNeue-Regular.woff2` |
-| Satoshi | `Satoshi-Variable.woff2` |
-
----
-
-## Environment Variables
-
-Copy `.env.example` to `.env.local` and fill in the values you need.
-
-### Football Data API (Live Scores — Optional)
-
-Sign up free at [football-data.org](https://www.football-data.org/) (free tier: 10 req/min).
+### 2. Environment variables
 
 ```env
+# ── football-data.org — live score, events (free: 10 req/min)
+# Sign up: https://www.football-data.org/
 NEXT_PUBLIC_FOOTBALL_API_KEY=your_key_here
-```
 
-Without this key the app runs entirely on static fixture data — all pages work normally.
+# ── API-Football — possession, shots, corners (free: 100 req/day)
+# Sign up: https://api-sports.io/
+# Server-side only — no NEXT_PUBLIC_ prefix intentional
+API_FOOTBALL_KEY=your_key_here
 
-### Firebase (Fan Poll — Optional)
-
-Create a project at [console.firebase.google.com](https://console.firebase.google.com/), enable Firestore, then add:
-
-```env
+# ── Firebase — fan poll real-time sync
+# Create project: https://console.firebase.google.com/
 NEXT_PUBLIC_FIREBASE_API_KEY=...
 NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=...
 NEXT_PUBLIC_FIREBASE_PROJECT_ID=...
 NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=...
 NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=...
 NEXT_PUBLIC_FIREBASE_APP_ID=...
+
+# ── Warmup cron secret — protects /api/warmup from public abuse
+WARMUP_SECRET=your_random_secret_here
 ```
 
-Without Firebase, the fan poll uses seeded deterministic data and votes are stored in `localStorage`.
+All APIs are optional for local development. Without them the app runs on static data.
 
 ---
 
-## Deployment (Vercel)
+## Deployment
+
+### Vercel (recommended)
 
 ```bash
-# Install Vercel CLI
 npm i -g vercel
-
-# Deploy to production
 vercel --prod
 ```
 
-Or connect the GitHub repo to the Vercel dashboard — it auto-detects Next.js.
+Or connect the GitHub repo on the Vercel dashboard — it auto-detects Next.js.
 
-Set the environment variables above in **Vercel Project Settings → Environment Variables**.
+Add all environment variables in **Vercel → Project → Settings → Environment Variables**, then redeploy.
+
+### Cron job setup (post-match stats guarantee)
+
+Sign up free at [cron-job.org](https://cron-job.org) and create one job:
+
+| Setting | Value |
+|---|---|
+| URL | `https://your-site.vercel.app/api/warmup?secret=YOUR_WARMUP_SECRET` |
+| Schedule | Every 5 minutes |
+| Method | GET |
+| Save responses | Enabled (for debugging during matches) |
+
+This is the only piece of external infrastructure. It costs nothing.
 
 ---
 
 ## Features
 
-| Feature | Notes |
-| --- | --- |
-| Home page — Hero, countdown, live matches | Deterministic star particles, hydration-safe |
-| All 104 fixtures with filters | Date, group, stage, status |
-| 12 group standings tables | Computed live from fixture data |
-| Symmetric tournament bracket | SVG connector lines, WC Trophy SVG, mobile toggle |
-| 48 team profile pages | SSG, FIFA ranking, fixtures, stats |
-| Fan poll | All 48 teams sorted by fan base, search, Firebase real-time |
-| Favorite team card | Personalized next match + countdown |
-| Match detail modal | Slide-up drawer, stadium info, countdown, Escape/backdrop close |
-| Circle country flags | Crop-to-circle with `object-cover`, used in poll + team selector |
-| Global search | Fuse.js fuzzy search across teams + fixtures |
-| Live badge in nav | Only appears when a match has `status: LIVE` |
-| IST timezone display | All times converted from UTC to IST (UTC+5:30) |
-| Countdown timers | Days / hours / min / sec, SSR-safe |
-| Glassmorphism design system | Tailwind + custom CSS variables |
-| Mobile-first responsive | Full bracket view available via toggle on mobile |
-| Dark theme | Navy-950 base, gold accents |
-| SEO + OpenGraph | Per-page metadata |
-| Keyboard navigation | ⌘K / Ctrl+K opens search, Escape closes modals |
+### Match Experience
+- **Dual-source live data** — score/events from football-data.org, stats from API-Football, merged in a single `/api/match/[id]` response
+- **Graceful degradation** — if API-Football quota runs out mid-match, the stats panel falls back to event-computed stats (goals, cards, subs counted from the events array)
+- **Real status detection** — route uses football-data.org's actual match status (`IN_PLAY`, `EXTRA_TIME`, `PENALTY`, `FINISHED`) not the static FIXTURES field, so ET and penalty shootouts are handled correctly
+- **30-second score refresh** — client polls every 30s; only live and finished matches poll at all
+- **Match detail modal** — slide-up drawer from any fixture card, with CTA to full match page
+
+### Tournament Data
+- All 104 fixtures with correct kick-off times, stadiums, and match importance labels
+- 48 complete Starting XI lineups with formations, jersey numbers, and positions
+- 16 host stadiums with capacity, city, and surface
+- 12 group standings computed live from fixture results
+- Full knockout bracket with SVG connector lines
+
+### Design
+- **FIFA World Cup Trophy** in bracket centre — `mix-blend-mode: screen` blends naturally on dark background without requiring a transparent PNG
+- Glassmorphism design system — custom CSS variables, backdrop blur, gold accents
+- Team colors used throughout — score heroes, lineup jersey pills, stat bars all use each team's primary color
+- Dark navy base (`#050e1c`) with gold (`#F5C518`) and electric blue (`#00C2FF`) accents
+
+### UI/UX
+- **Global search** — `⌘K` / `Ctrl+K`, Fuse.js fuzzy search across all teams and fixtures
+- **Timezone selector** — all kick-off times displayed in user's selected timezone
+- **Fan poll** — vote for any of 48 teams, real-time results via Firebase Firestore, localStorage fallback
+- **Countdown timers** — SSR-safe, days/hours/min/sec to next match or tournament
+- **Favorite team card** — personalized next match + countdown based on selected team
+- Keyboard navigation — Escape closes all modals
+
+### Performance
+- Fully static-generated pages (SSG) at build time
+- Zero layout shift — skeleton loaders for dynamic content
+- Vercel Edge Network caching for all API responses
+- No client-side API key exposure — `API_FOOTBALL_KEY` is server-only
 
 ---
 
 ## Tech Stack
 
-| Tool | Version | Purpose |
-| --- | --- | --- |
-| Next.js | latest (15.x) | Framework — App Router, SSG, Turbopack |
-| React | 19 | UI library |
-| TypeScript | 5 | Type safety |
-| Tailwind CSS | 3.4 | Styling + design tokens |
-| Framer Motion | 12 | Animations + page transitions |
-| Zustand | 5 | Global state (preferences, poll, UI) |
-| Firebase | 11 | Fan poll — Firestore real-time |
-| Fuse.js | 7 | Client-side fuzzy search |
-| Lucide React | latest | Icons |
+| Tool | Purpose |
+|---|---|
+| **Next.js 15** | App Router, SSG, server components, route handlers |
+| **React 19** | UI |
+| **TypeScript 5** | Full type safety across data, API, components |
+| **Tailwind CSS 3.4** | Styling + design tokens |
+| **Framer Motion 12** | Animations, slide-up modals, page transitions |
+| **Zustand 5** | Global state — preferences, fan poll, timezone, UI |
+| **Firebase 11** | Fan poll — Firestore real-time sync |
+| **Fuse.js 7** | Client-side fuzzy search |
+| **Lucide React** | Icons |
+| **football-data.org** | Live scores, goals, cards, substitutions |
+| **api-sports.io** | Possession, shots, corners, fouls, saves |
+| **cron-job.org** | External cron — warms post-match stat cache |
+| **Vercel** | Hosting, Edge Network, Data Cache, serverless functions |
 
 ---
 
 ## Project Structure
 
-```text
-public/
-  fonts/                      ← Clash Display, Bebas Neue, Satoshi (installed)
-
+```
 app/
-  page.tsx                    ← Home page
-  fixtures/page.tsx           ← Match centre with filters
-  groups/page.tsx             ← All 12 group standings
-  bracket/page.tsx            ← Knockout bracket — SVG connectors + trophy
-  teams/page.tsx              ← All 48 teams grid
-  teams/[slug]/page.tsx       ← Individual team profile (SSG)
-  layout.tsx                  ← Root layout, font loading, providers
-  globals.css                 ← Design system — tokens, glass, animations
+  page.tsx                      Home page
+  fixtures/page.tsx             All 104 fixtures with filters
+  groups/page.tsx               12 group standings
+  bracket/page.tsx              Knockout bracket + WC Trophy
+  teams/page.tsx                48 teams grid
+  teams/[slug]/page.tsx         Team profile (SSG)
+  matches/[id]/page.tsx         Live match page — serves LiveMatchView
+  api/
+    match/[id]/route.ts         Dual-source API proxy (fdorg + api-football)
+    warmup/route.ts             Cache warmer — called by external cron
 
 components/
   home/
-    HeroSection.tsx           ← Hero banner with deterministic star particles
-    TodayMatches.tsx          ← Today's fixtures carousel
-    FanPoll.tsx               ← 48-team fan poll, search, Firebase
-    FavoriteTeamCard.tsx      ← My Team card with next match + countdown
-    FeaturedStats.tsx         ← 48 · 104 · 16 · 5B+ animated counters
-    GroupHighlights.tsx       ← Group stage summary cards
-    TournamentProgress.tsx    ← Stage progress tracker
+    HeroSection.tsx             Hero, deterministic star particles
+    TodayMatches.tsx            Today's matches carousel
+    FanPoll.tsx                 48-team poll + Firebase
+    FavoriteTeamCard.tsx        My Team card + next match countdown
+    FeaturedStats.tsx           Animated counters (48 / 104 / 16 / 5B+)
+    GroupHighlights.tsx         Group stage summary cards
+    TournamentProgress.tsx      Stage progress tracker
   layout/
-    Navigation.tsx            ← Fixed header, mobile drawer, conditional live badge
-    Footer.tsx                ← Links, tournament facts, social icons
+    Navigation.tsx              Fixed header, mobile drawer, live badge
+    Footer.tsx                  Links, tournament facts
   ui/
-    MatchCard.tsx             ← Match card (clickable → opens modal)
-    MatchDetailModal.tsx      ← Slide-up drawer — stadium info + countdown
-    TeamFlag.tsx              ← Flag image (rectangular or circle-crop mode)
-    CountdownTimer.tsx        ← SSR-safe countdown
-    LiveBadge.tsx             ← LIVE / HT animated badge
-    GlassCard.tsx             ← Glass panel + Section wrapper
-    AnimatedNumber.tsx        ← Count-up animation
-    Skeleton.tsx              ← Loading placeholders
+    LiveMatchView.tsx           Full live match page (mobile tabs + desktop 3-col)
+    MatchCard.tsx               Fixture card → opens modal
+    MatchDetailModal.tsx        Slide-up drawer with live CTA
+    TeamFlag.tsx                Flag (rectangular or circle-crop)
+    CountdownTimer.tsx          SSR-safe countdown
+    LiveBadge.tsx               LIVE / HT animated badge
   search/
-    SearchModal.tsx           ← Full-screen Fuse.js search
-  providers/
-    QueryProvider.tsx         ← TanStack Query wrapper
+    SearchModal.tsx             Full-screen ⌘K search
 
 data/
-  teams.ts                   ← All 48 teams — name, code, group, ranking, colors
-  fixtures.ts                ← All 104 matches — dates, stadiums, status
-  groups.ts                  ← 12-group structure + standings logic
-  stadiums.ts                ← 16 host venues with capacity + surface
+  teams.ts                      48 teams — name, code, colors, rankings
+  fixtures.ts                   104 matches — dates, stadiums, status
+  lineups.ts                    48 Starting XI lineups with formations
+  groups.ts                     12 groups + standings logic
+  stadiums.ts                   16 venues — capacity, location, surface
 
 lib/
-  api.ts                     ← Football Data API client + static fallback
-  firebase.ts                ← Firestore poll + localStorage fallback
-  timeUtils.ts               ← UTC → IST conversion, countdown helpers
-  utils.ts                   ← cn(), formatters, importance labels
-
-store/
-  useAppStore.ts             ← Zustand — preferences, fan poll, UI state
+  api.ts                        football-data.org client + fallback
+  firebase.ts                   Firestore poll + localStorage fallback
+  timeUtils.ts                  UTC → timezone, countdown helpers
+  utils.ts                      cn(), formatters, importance labels
 
 types/
-  index.ts                   ← Match, Team, Stadium, FanPoll interfaces
+  index.ts                      All domain types — Match, Team, Stadium,
+                                LiveMatchData, LiveStats, FdorgGoal, etc.
 ```
+
+---
+
+## API Budget Reference
+
+| Endpoint | Provider | Limit | Revalidate | Real calls / match |
+|---|---|---|---|---|
+| `/competitions/WC/matches` | football-data.org | 10 req/min | 5 min | ~1 |
+| `/matches/{id}` | football-data.org | 10 req/min | 30 s (live) | ~180 |
+| `/fixtures?live=all` | API-Football | 100 req/day shared | 6 min | ~23 |
+| `/fixtures/statistics` | API-Football | 100 req/day shared | 6 min | ~23 |
+
+football-data.org: 10 req/min limit is per-account. With Vercel Data Cache, 10,000 visitors = 2 real req/min. Well within limit at any traffic level.
+
+API-Football: worst-case two matches both going to ET + penalties on the same day = 96/100 calls. Resets at midnight UTC.
 
 ---
 
 ## Scripts
 
 ```bash
-npm run dev         # Development server (Turbopack)
-npm run build       # Production build
-npm run start       # Production server
-npm run lint        # ESLint
-npm run type-check  # TypeScript (tsc --noEmit)
+npm run dev          # Dev server (Turbopack)
+npm run build        # Production build
+npm run start        # Production server
+npm run lint         # ESLint
+npm run type-check   # tsc --noEmit
 ```
+
+---
+
+## Custom Fonts
+
+Pre-installed in `public/fonts/` — no action needed.
+
+| Font | Usage |
+|---|---|
+| Clash Display | Headings, team names, section titles |
+| Bebas Neue | Score numbers, stats figures |
+| Satoshi | Body text, UI copy |
+
+---
+
+<div align="center">
+
+Built for the beautiful game.
+
+</div>
