@@ -92,13 +92,19 @@ Handles the richer stats:
 
 ### Why 100 req/day is enough for the entire tournament
 
-Free tier stats refresh every **6 minutes** via Vercel's shared Data Cache. The math:
+Free tier stats refresh every **15 minutes** via Vercel's shared Data Cache. The math is designed around the absolute worst case — every match on a given day starting at a completely different time, with zero cache sharing between them.
 
 ```
-Worst-case match: 135 min (90 + full ET + penalties)
-135 min ÷ 6 min = 23 intervals × 2 calls = 46 API calls per match
-Two matches on same day: 92 + ~4 post-match = 96 / 100 ✅
-Quota resets at midnight UTC — fresh slate every day
+Worst-case formula: N_matches × (duration ÷ 15 min) × 2 calls/window
+
+Group stage (max 6 matches/day, 90 min each — no ET in group stage)
+  6 × (90 ÷ 15) × 2 = 6 × 6 × 2 = 72 / 100 ✅
+
+Knockout stage (max 4 matches/day, 135 min with full ET + penalties)
+  4 × (135 ÷ 15) × 2 = 4 × 9 × 2 = 72 / 100 ✅
+
+Mathematical minimum required: 11.4 min — 15 min gives a 28-call safety margin.
+Quota resets at midnight UTC — fresh slate every day.
 ```
 
 Score and events (football-data.org) refresh every 30 seconds with no budget concern — different API, different quota.

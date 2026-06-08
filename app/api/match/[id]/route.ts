@@ -21,7 +21,7 @@ async function getLiveApiFixtures(): Promise<ApiFixture[]> {
   try {
     const res = await fetch(`${APISPORTS_BASE}/fixtures?live=all`, {
       headers: { 'x-apisports-key': APISPORTS_KEY },
-      next: { revalidate: 360 },  // 6 min — fits 2× worst-case (ET+pens) in 100/day budget
+      next: { revalidate: 900 },  // 15 min — fits 6 group-stage or 4 knockout matches regardless of scheduling
     })
     if (!res.ok) return []
     return (await res.json()).response ?? []
@@ -30,7 +30,7 @@ async function getLiveApiFixtures(): Promise<ApiFixture[]> {
   }
 }
 
-// revalidate: 360 while live (6 min), 86400 when finished (24 hr, frozen data)
+// revalidate: 900 while live (15 min), 86400 when finished (24 hr, frozen data)
 async function getApiStats(fixtureId: number, revalidate: number): Promise<LiveStats | null> {
   try {
     const res = await fetch(`${APISPORTS_BASE}/fixtures/statistics?fixture=${fixtureId}`, {
@@ -127,8 +127,11 @@ export async function GET(
   const reallyFinished = realStatus === 'FINISHED' || isDefinitelyOver
 
   // ── Step 2: API-Football stats (live + finished) ──────────────────────────
-  // Budget math: 6-min revalidate × 135-min worst-case (ET+pens) × 2 calls = 46 per match
-  // 2 matches × 46 = 92 + ~4 post-match = 96/100. Resets at 00:00 UTC.
+  // Budget math: worst case = N matches all at separate times, no window overlap
+  //   Formula: N × (duration ÷ 15 min) × 2 calls/window
+  //   Group stage (6 matches, 90 min max — no ET in groups): 6 × 6 × 2 = 72 / 100 ✅
+  //   Knockout    (4 matches, 135 min with ET+pens):         4 × 9 × 2 = 72 / 100 ✅
+  //   Resets at 00:00 UTC every day.
   //
   // Post-match guarantee: /api/warmup (called by external cron every 5 min)
   // ensures this runs right at/after FT while live=all cache is still warm.
@@ -145,7 +148,7 @@ export async function GET(
       )
       if (match) {
         // Live → 6-min refresh.  Finished → 24-hr permanent cache.
-        stats = await getApiStats(match.fixture.id, reallyLive ? 360 : 86_400)
+        stats = await getApiStats(match.fixture.id, reallyLive ? 900 : 86_400)
       }
     } catch { /* stats null → UI falls back to event-computed stats */ }
   }
