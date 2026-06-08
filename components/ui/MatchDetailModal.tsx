@@ -2,7 +2,8 @@
 
 import { useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { X, MapPin, Zap } from 'lucide-react'
+import Link from 'next/link'
+import { X, MapPin, Zap, ExternalLink } from 'lucide-react'
 import type { Match } from '@/types'
 import { getTeam } from '@/data/teams'
 import { getStadium } from '@/data/stadiums'
@@ -225,6 +226,28 @@ export function MatchDetailModal({ match, onClose }: Props) {
                   </p>
                 </div>
               </div>
+            </div>
+          </>
+        )}
+
+        {/* View full match page CTA */}
+        {(isLive || isDone || isUpcoming) && (
+          <>
+            <div className="h-px mx-5" style={{ background: 'rgba(255,255,255,0.06)' }} />
+            <div className="px-5 py-4">
+              <Link
+                href={`/matches/${match.id}`}
+                onClick={onClose}
+                className={cn(
+                  'w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold transition-all',
+                  isLive
+                    ? 'bg-live/15 border border-live/30 text-live hover:bg-live/22'
+                    : 'bg-white/[0.05] border border-white/[0.08] text-white/60 hover:text-white hover:bg-white/[0.08]'
+                )}
+              >
+                <ExternalLink className="w-3.5 h-3.5" />
+                {isLive ? 'View Live Match' : isDone ? 'View Match Details' : 'Match Page'}
+              </Link>
             </div>
           </>
         )}

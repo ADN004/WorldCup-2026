@@ -191,6 +191,61 @@ export interface TeamLineupData {
 
 export type Position = 'GK' | 'DEF' | 'MID' | 'FWD'
 
+// ─── Live match data (from football-data.org API proxy) ─────────────────────
+
+export interface FdorgTeamRef {
+  id:   number
+  name: string
+}
+
+export interface FdorgGoal {
+  minute:     number
+  injuryTime: number | null
+  type:       'REGULAR' | 'OWN_GOAL' | 'PENALTY'
+  team:       FdorgTeamRef
+  scorer:     FdorgTeamRef
+  assist:     FdorgTeamRef | null
+}
+
+export interface FdorgBooking {
+  minute: number
+  team:   FdorgTeamRef
+  player: FdorgTeamRef
+  card:   'YELLOW_CARD' | 'RED_CARD' | 'YELLOW_RED_CARD'
+}
+
+export interface FdorgSubstitution {
+  minute:    number
+  team:      FdorgTeamRef
+  playerOut: FdorgTeamRef
+  playerIn:  FdorgTeamRef
+}
+
+export interface LiveStats {
+  possession:    { home: number; away: number }
+  shots:         { home: number; away: number }
+  shotsOnTarget: { home: number; away: number }
+  corners:       { home: number; away: number }
+  fouls:         { home: number; away: number }
+  offsides:      { home: number; away: number }
+  saves:         { home: number; away: number }
+}
+
+export interface LiveMatchData {
+  fdorgId:       number
+  status:        string
+  minute:        number | null
+  venue:         string | null
+  score: {
+    fullTime: { home: number | null; away: number | null }
+    halfTime: { home: number | null; away: number | null }
+  }
+  goals:         FdorgGoal[]
+  bookings:      FdorgBooking[]
+  substitutions: FdorgSubstitution[]
+  stats:         LiveStats | null
+}
+
 export interface Player {
   name: string
   pos: Position
